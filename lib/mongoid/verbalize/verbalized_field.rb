@@ -37,7 +37,7 @@ module Mongoid
       # translation available for current locale, if will try to
       # get translation for defalt_locale.
       def current_locale_value(use_default_if_empty)
-        lookups = [self.class.locale]
+        lookups = [self.class.current_locale]
 
         # TODO: Add I18n.fallbacks support instead of :use_default_if_empty
         if use_default_if_empty
@@ -83,7 +83,7 @@ module Mongoid
         # this custom class from it.
         def demongoize(object)
           localized_values = object.each_with_object({}) do |(key, value), h|
-            versions = value['versions'].map do |v|
+            versions = (value['versions'] || []).map do |v|
               LocalizedVersion.new(v['version'], v['value'])
             end
             h[key.to_sym] = LocalizedValue.new(value['value'], versions)

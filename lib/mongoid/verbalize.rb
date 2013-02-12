@@ -129,7 +129,7 @@ module Mongoid
           define_method("#{meth}") do
             raw = read_attribute(name)
             field_value = field.demongoize(raw)
-            field_value.current_locale_value
+            field_value.current_locale_value(field.options[:use_default_if_empty])
           end
         end
       end
