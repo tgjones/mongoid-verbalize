@@ -7,10 +7,12 @@ require 'mongoid/verbalize'
 require 'rspec'
 
 Mongoid.configure do |config|
-	config.master = Mongo::Connection.new.db('mongoid_verbalize_test')
-	config.allow_dynamic_fields = false
-  #config.connect_to('mongoid_verbalize_test')
+  config.connect_to('mongoid_verbalize_test')
 end
+# Mongoid.logger = Logger.new($stdout)
+# Mongoid.logger.level = Logger::DEBUG
+# Moped.logger.level = Logger::DEBUG
+# Moped.logger = Logger.new($stdout)
 
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each { |f| require f }
 

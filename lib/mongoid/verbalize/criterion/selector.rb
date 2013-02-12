@@ -1,10 +1,12 @@
-module Mongoid
-  module Criterion
-    class Selector< Hash
-      def []=(key, value)
-        if fields[key.to_s].try(:type) == Mongoid::Verbalize::VerbalizedField
-          key = "#{key}.#{::I18n.locale}.value"
-        end
+module Origin
+  class Selector
+  
+  private
+
+    def normalized_key(key, serializer)
+      if serializer.type == Mongoid::Verbalize::VerbalizedField
+        "#{key}.#{::I18n.locale}.value"
+      else
         super
       end
     end

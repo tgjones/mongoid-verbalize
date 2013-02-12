@@ -65,13 +65,8 @@ describe Mongoid::Verbalize, "verbalized_field" do
 
       describe "where() criteria" do
         it "should use the current locale value" do
+          query = Entry.where(:title => 'Title')
           Entry.where(:title => 'Title').first.should == @entry
-        end
-      end
-
-      describe "find(:first) with :conditions" do
-        it "should use the current locale value" do
-          Entry.find(:first, :conditions => {:title => 'Title'}).should == @entry
         end
       end
     end
@@ -116,8 +111,8 @@ describe Mongoid::Verbalize, "verbalized_field" do
           context "before saving" do
             it "should return all translations without versions" do
               @entry.title_translations_raw.should == {
-                'en' => { "value" => "Title" },
-                'es' => { "value" => "Título" },
+                'en' => { "value" => "Title", "versions" => [] },
+                'es' => { "value" => "Título", "versions" => [] },
               }
             end
           end
@@ -141,15 +136,15 @@ describe Mongoid::Verbalize, "verbalized_field" do
           context "before saving" do
             it "should return all translations without versions" do
               @entry.title_translations.should be_instance_of(
-                Mongoid::Verbalize::VerbalizedFieldValue)
-              @entry.title_translations[:en].should be_instance_of(
-                Mongoid::Verbalize::VerbalizedFieldLocalizedValue)
-              @entry.title_translations[:en].current_value.should == 'Title'
-              @entry.title_translations[:en].versions.should == []
-              @entry.title_translations[:es].should be_instance_of(
-                Mongoid::Verbalize::VerbalizedFieldLocalizedValue)
-              @entry.title_translations[:es].current_value.should == 'Título'
-              @entry.title_translations[:es].versions.should == []
+                Mongoid::Verbalize::VerbalizedField)
+              @entry.title_translations.localized_values[:en].should be_instance_of(
+                Mongoid::Verbalize::VerbalizedField::LocalizedValue)
+              @entry.title_translations.localized_values[:en].current_value.should == 'Title'
+              @entry.title_translations.localized_values[:en].versions.should == []
+              @entry.title_translations.localized_values[:es].should be_instance_of(
+                Mongoid::Verbalize::VerbalizedField::LocalizedValue)
+              @entry.title_translations.localized_values[:es].current_value.should == 'Título'
+              @entry.title_translations.localized_values[:es].versions.should == []
             end
           end
           
@@ -160,22 +155,22 @@ describe Mongoid::Verbalize, "verbalized_field" do
             end
 
             it "should return all translations with versions" do
-              @entry.title_translations[:en].should be_instance_of(
-                Mongoid::Verbalize::VerbalizedFieldLocalizedValue)
-              @entry.title_translations[:en].current_value.should == 'Title'
-              @entry.title_translations[:en].versions.should have(1).item
-              @entry.title_translations[:en].versions[0].should be_instance_of(
-                Mongoid::Verbalize::VerbalizedFieldLocalizedValueVersion)
-              @entry.title_translations[:en].versions[0].version.should == 0
-              @entry.title_translations[:en].versions[0].value.should == 'Title'
-              @entry.title_translations[:es].should be_instance_of(
-                Mongoid::Verbalize::VerbalizedFieldLocalizedValue)
-              @entry.title_translations[:es].current_value.should == 'Título'
-              @entry.title_translations[:es].versions.should have(1).item
-              @entry.title_translations[:es].versions[0].should be_instance_of(
-                Mongoid::Verbalize::VerbalizedFieldLocalizedValueVersion)
-              @entry.title_translations[:es].versions[0].version.should == 0
-              @entry.title_translations[:es].versions[0].value.should == 'Título'
+              @entry.title_translations.localized_values[:en].should be_instance_of(
+                Mongoid::Verbalize::VerbalizedField::LocalizedValue)
+              @entry.title_translations.localized_values[:en].current_value.should == 'Title'
+              @entry.title_translations.localized_values[:en].versions.should have(1).item
+              @entry.title_translations.localized_values[:en].versions[0].should be_instance_of(
+                Mongoid::Verbalize::VerbalizedField::LocalizedVersion)
+              @entry.title_translations.localized_values[:en].versions[0].version.should == 0
+              @entry.title_translations.localized_values[:en].versions[0].value.should == 'Title'
+              @entry.title_translations.localized_values[:es].should be_instance_of(
+                Mongoid::Verbalize::VerbalizedField::LocalizedValue)
+              @entry.title_translations.localized_values[:es].current_value.should == 'Título'
+              @entry.title_translations.localized_values[:es].versions.should have(1).item
+              @entry.title_translations.localized_values[:es].versions[0].should be_instance_of(
+                Mongoid::Verbalize::VerbalizedField::LocalizedVersion)
+              @entry.title_translations.localized_values[:es].versions[0].version.should == 0
+              @entry.title_translations.localized_values[:es].versions[0].value.should == 'Título'
             end
           end
         end
@@ -237,7 +232,7 @@ describe Mongoid::Verbalize do
         @entry.title = 'foo'
         @entry.title = 'bar'
         @expected_translations = {
-          'en' => { "value" => 'bar' }
+          'en' => { "value" => 'bar', 'versions' => [] }
         }
       end
       

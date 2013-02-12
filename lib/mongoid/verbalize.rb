@@ -1,5 +1,4 @@
 require 'mongoid/verbalize/verbalized_field'
-require 'mongoid/verbalize/verbalized_field_value'
 require 'mongoid/verbalize/criterion/selector'
 require 'mongoid/verbalize/verbalized_validator'
 require 'mongoid/verbalize/verbalized_version'
@@ -10,6 +9,10 @@ module Mongoid
     
     included do
       include ActiveSupport::Callbacks
+
+      Mongoid::Fields.option :use_default_if_empty do |model, field, value|
+        # TODO
+      end
     end
     
     def create_new_version
@@ -18,7 +21,7 @@ module Mongoid
       # Do a first pass to see if any verbalized field has changed
       any_field_changed = false
       iterate_all_verbalized_fields do |document, field|
-        any_field_changed = true if field.changed?(document.read_attribute(field.name))        
+        any_field_changed = true if field.demongoize(document.read_attribute(field.name)).changed?
       end
       return unless any_field_changed
 
@@ -30,8 +33,9 @@ module Mongoid
       
         # Apply this new version number to verbalized fields
         iterate_all_verbalized_fields do |document, field|
-          hash = field.prepare_for_save(document.read_attribute(field.name), next_version_number)
-          document.write_attribute(field.name, hash)
+          field_value = field.demongoize(document.read_attribute(field.name))
+          field_value.prepare_for_save(next_version_number)
+          document.write_attribute(field.name, field_value)
         end
       end
 
@@ -111,35 +115,56 @@ module Mongoid
         # Get field to retain incapsulation of LocalizedField class
         field = fields[name]
         
-        instance_variable_name = "@#{meth}_translations_instance"
+        create_verbalized_field_getter(name, meth, field)
+        create_verbalized_field_setter(name, meth, field)
+        
+        create_verbalized_translations_getter(name, meth, field)
 
+        create_verbalized_translations_raw_getter(name, meth)
+        create_verbalized_translations_raw_setter(name, meth)
+      end
+
+      def create_verbalized_field_getter(name, meth, field)
         generated_methods.module_eval do
-          # Redefine writer method, since it's impossible to correctly implement
-          # = method on field itself
-          define_method("#{meth}=") do |value|
-            hash = field.assign(read_attribute(name), value)
-            write_attribute(name, hash)
-            instance_variable_set(instance_variable_name, nil)
+          define_method("#{meth}") do
+            raw = read_attribute(name)
+            field_value = field.demongoize(raw)
+            field_value.current_locale_value
           end
-          
-          # Strongly-typed API for dealing with translated field values
-          define_method("#{meth}_translations") do
-            # Dynamically memoize instance variable.
-            instance_variable_get(instance_variable_name) ||
-              instance_variable_set(instance_variable_name,
-                VerbalizedFieldValue.new(self, name, field.display_name(self),
-                  field.path(self), read_attribute(name)))
-          end
+        end
+      end
 
-          # Return list of attribute translations
+      def create_verbalized_field_setter(name, meth, field)
+        generated_methods.module_eval do
+          define_method("#{meth}=") do |value|
+            raw = read_attribute(name)
+            field_value = field.demongoize(raw)
+            field_value.current_locale_value = value
+            write_attribute(name, field_value)
+          end
+        end
+      end
+
+      def create_verbalized_translations_getter(name, meth, field)
+        generated_methods.module_eval do
+          define_method("#{meth}_translations") do
+            field.demongoize(read_attribute(name))
+          end
+        end
+      end
+
+      def create_verbalized_translations_raw_getter(name, meth)
+        generated_methods.module_eval do
           define_method("#{meth}_translations_raw") do
             read_attribute(name)
           end
+        end
+      end
 
-          # Mass-assign translations
+      def create_verbalized_translations_raw_setter(name, meth)
+        generated_methods.module_eval do
           define_method("#{meth}_translations_raw=") do |values|
             write_attribute(name, values)
-            instance_variable_set(instance_variable_name, nil)
           end
         end
       end

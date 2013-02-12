@@ -15,9 +15,9 @@ Gem::Specification.new do |s|
   s.files         = Dir.glob('{lib,spec}/**/*') + %w(LICENSE README.md Rakefile Gemfile .rspec)
   s.require_path = 'lib'
 
-  s.add_runtime_dependency('mongoid', ['< 3.0', '>= 2.0'])
-  s.add_runtime_dependency('bson_ext')
+  s.add_runtime_dependency('mongoid', ['<= 4.0', '>= 3.0'])
   s.add_development_dependency('rake', ['>= 0.9.2'])
   s.add_development_dependency('rspec', ['~> 2.12.0'])
   s.add_development_dependency('yard', ['~> 0.8'])
+  s.add_development_dependency('debugger')
 end

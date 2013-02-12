@@ -1,83 +1,125 @@
 module Mongoid
   module Verbalize
+    # Strongly-typed accessor for this structure:
+    # {
+    #   'en' => { "value" => "Title",  "versions" => [ { "version" => 0, "value" => 'Title' } ] },
+    #   'es' => { "value" => "Título", "versions" => [ { "version" => 0, "value" => 'Título' } ] },
+    # }
     class VerbalizedField
-      include Mongoid::Fields::Serializable
-      
-      def display_name(document)
-        if options[:display_name].is_a? Proc
-          options[:display_name].call(document)
-        else
-          options[:display_name]
+      class LocalizedValue
+        attr_accessor :current_value, :versions
+
+        def initialize(current_value=nil, versions=[])
+          @current_value = current_value
+          @versions = versions
         end
-      end
-      
-      def path(document)
-        if options[:path].present? && options[:path].is_a?(Proc)
-          options[:path].call(document)
-        else
-          options[:path] || name
+
+        def changed?
+          previous_version = versions.last
+          previous_version.nil? || previous_version.value != current_value
+        end
+
+        def add_version(new_version_number)
+          versions.push(LocalizedVersion.new(new_version_number, current_value))
         end
       end
 
-      # Return translated values of field, accoring to current locale.
+      LocalizedVersion = Struct.new(:version, :value)
+
+      attr_reader :localized_values
+
+      def initialize(localized_values)
+        @localized_values = localized_values
+      end
+
+      # Return translated value of field, accoring to current locale.
       # If :use_default_if_empty is set, then in case when there no
       # translation available for current locale, if will try to
       # get translation for defalt_locale.
-      def deserialize(object)
-        lookups = [self.locale]
+      def current_locale_value(use_default_if_empty)
+        lookups = [self.class.locale]
 
         # TODO: Add I18n.fallbacks support instead of :use_default_if_empty
-        if options[:use_default_if_empty]
-          lookups.push ::I18n.default_locale.to_s
+        if use_default_if_empty
+          lookups.push(::I18n.default_locale)
         end
         
-        # Find first localized version array in lookup path
-        locale_value = object[lookups.find{|locale| object[locale]}]
-        return nil if locale_value.nil?
-        
-        # Return latest version
-        return locale_value["value"]
+        # Find first localized value in lookup path
+        localized_value = @localized_values[lookups.find { |l| @localized_values[l] }]
+        return nil if localized_value.nil?
+
+        localized_value.current_value
+      end
+      def current_locale_value=(value)
+        current_value.current_value = value
       end
 
-      # Assing new translation to translation table.
-      def assign(object = {}, value)
-        locale_value = object[locale] || {}
-        object.merge(locale => locale_value.merge("value" => value))
+      # Called when determining whether to create a new version.
+      def changed?
+        @localized_values.values.any?(&:changed?)
       end
 
-      # Return current locale as string
-      def locale
-        ::I18n.locale.to_s
-      end
-      
-      def changed?(object)
-        iterate_changes(object) do |versions, new_value|
-          return true
-        end
-        false
-      end
-      
       # Creates a new version for changed values
-      def prepare_for_save(object, new_version_number)
-        iterate_changes(object) do |versions, new_value|
-          versions.push({ "version" => new_version_number, "value" => new_value })
+      def prepare_for_save(new_version_number)
+        @localized_values.values.select(&:changed?).each do |v|
+          v.add_version(new_version_number)
         end
-        return object
       end
-      
-    private
-      def iterate_changes(object, &block)
-        return if object.nil?
-        object.each do |locale, locale_value|
-          current_value = locale_value["value"]
-          versions = (locale_value["versions"] ||= [])
-          previous_version = versions.last
-          
-          # Has value been changed?
-          if previous_version.nil? || previous_version["value"] != current_value
-            yield versions, current_value
+
+      # Converts an object of this instance into a database friendly value.
+      def mongoize
+        @localized_values.each_with_object({}) do |(key, value), h|
+          h[key.to_s] = {
+            'value' => value.current_value,
+            'versions' => value.versions.map do |v|
+              { 'version' => v.version, 'value' => v.value }
+            end
+          }
+        end
+      end
+
+      class << self
+        # Get the object as it was stored in the database, and instantiate
+        # this custom class from it.
+        def demongoize(object)
+          localized_values = object.each_with_object({}) do |(key, value), h|
+            versions = value['versions'].map do |v|
+              LocalizedVersion.new(v['version'], v['value'])
+            end
+            h[key.to_sym] = LocalizedValue.new(value['value'], versions)
+          end
+          VerbalizedField.new(localized_values)
+        end
+
+        # Takes any possible object and converts it to how it would be
+        # stored in the database.
+        def mongoize(object)
+          case object
+          when VerbalizedField then object.mongoize
+          else object
           end
         end
+
+        # Converts the object that was supplied to a criteria and converts it
+        # into a database friendly form.
+        def evolve(object)
+          case object
+          when VerbalizedField then object.mongoize.current_locale_value
+          else object
+          end
+        end
+
+        # Return current locale as string
+        def current_locale
+          ::I18n.locale
+        end
+      end
+
+    private
+
+      # TODO: Rename this method.
+      def current_value
+        @localized_values[self.class.current_locale] ||= LocalizedValue.new
       end
     end
   end
