@@ -321,6 +321,7 @@ describe Mongoid::Verbalize do
     describe "embedded document" do
       before do
         class Entry
+          include Mongoid::Document
           include Mongoid::Verbalize
           acts_as_verbalized_document
           verbalized_field :title
