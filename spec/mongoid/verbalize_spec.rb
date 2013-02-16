@@ -4,8 +4,7 @@ require 'spec_helper'
 class Entry
   include Mongoid::Document
   include Mongoid::Verbalize
-  
-  acts_as_verbalized_document
+  include Mongoid::Verbalize::Versioning
 
   field :weight, :type => Integer, :default => 60
 
@@ -16,8 +15,7 @@ end
 class EntryWithValidations
   include Mongoid::Document
   include Mongoid::Verbalize
-  
-  acts_as_verbalized_document
+  include Mongoid::Verbalize::Versioning
 
   verbalized_field :title_validated_with_default_locale
   verbalized_field :title_validated_with_one_locale
@@ -323,7 +321,8 @@ describe Mongoid::Verbalize do
         class Entry
           include Mongoid::Document
           include Mongoid::Verbalize
-          acts_as_verbalized_document
+          include Mongoid::Verbalize::Versioning
+          
           verbalized_field :title
           embeds_many :sub_entries
         end
