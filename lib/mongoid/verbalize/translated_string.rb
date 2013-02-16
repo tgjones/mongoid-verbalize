@@ -22,6 +22,10 @@ module Mongoid
         def add_version(new_version_number)
           versions.push(LocalizedVersion.new(new_version_number, current_value))
         end
+
+        def find_version(version)
+          versions.find_all { |v| v.version <= version }.last
+        end
       end
 
       LocalizedVersion = Struct.new(:version, :value)
@@ -30,6 +34,13 @@ module Mongoid
 
       def initialize(localized_values)
         @localized_values = localized_values
+      end
+
+      def find_version(language, version)
+        localized_value = @localized_values[language]
+        return unless localized_value.present?
+        
+        localized_value.find_version(version)
       end
 
       # Return translated value of field, accoring to current locale.
