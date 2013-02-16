@@ -4,7 +4,7 @@ module Origin
   private
 
     def normalized_key(key, serializer)
-      if serializer.type == Mongoid::Verbalize::VerbalizedField
+      if serializer.type == Mongoid::Verbalize::TranslatedString
         "#{key}.#{::I18n.locale}.value"
       else
         super

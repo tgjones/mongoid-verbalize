@@ -5,7 +5,7 @@ module Mongoid
     #   'en' => { "value" => "Title",  "versions" => [ { "version" => 0, "value" => 'Title' } ] },
     #   'es' => { "value" => "Título", "versions" => [ { "version" => 0, "value" => 'Título' } ] },
     # }
-    class VerbalizedField
+    class TranslatedString
       class LocalizedValue
         attr_accessor :current_value, :versions
 
@@ -88,14 +88,14 @@ module Mongoid
             end
             h[key.to_sym] = LocalizedValue.new(value['value'], versions)
           end
-          VerbalizedField.new(localized_values)
+          TranslatedString.new(localized_values)
         end
 
         # Takes any possible object and converts it to how it would be
         # stored in the database.
         def mongoize(object)
           case object
-          when VerbalizedField then object.mongoize
+          when TranslatedString then object.mongoize
           else object
           end
         end
@@ -104,7 +104,7 @@ module Mongoid
         # into a database friendly form.
         def evolve(object)
           case object
-          when VerbalizedField then object.mongoize.current_locale_value
+          when TranslatedString then object.mongoize.current_locale_value
           else object
           end
         end

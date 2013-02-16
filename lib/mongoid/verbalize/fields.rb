@@ -12,7 +12,7 @@ module Mongoid
           # Let Mongoid do its thing
           super
 
-          return unless options[:type] == Mongoid::Verbalize::VerbalizedField
+          return unless options[:type] == Mongoid::Verbalize::TranslatedString
 
           field = fields[name]
 

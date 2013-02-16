@@ -1,6 +1,6 @@
 require 'mongoid/verbalize/fields'
-require 'mongoid/verbalize/verbalized_field'
-require 'mongoid/verbalize/criterion/selector'
+require 'mongoid/verbalize/translated_string'
+require 'mongoid/verbalize/selector'
 require 'mongoid/verbalize/verbalized_validator'
 require 'mongoid/verbalize/verbalized_version'
 
@@ -72,7 +72,7 @@ module Mongoid
       end
       
       def verbalized_field(name, options = {})
-        field(name, options.merge(:type => VerbalizedField, :default => {}))
+        field(name, options.merge(:type => TranslatedString, :default => {}))
       end
 
       def validates_default_locale(names, options = {})
@@ -88,7 +88,7 @@ module Mongoid
       end
       
       def verbalized_fields(document)
-        document.class.fields.reject { |name, field| field.options[:type] != VerbalizedField }
+        document.class.fields.reject { |name, field| field.options[:type] != TranslatedString }
       end
       
       def verbalized_children(document)

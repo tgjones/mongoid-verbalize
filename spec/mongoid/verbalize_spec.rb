@@ -136,13 +136,13 @@ describe Mongoid::Verbalize, "verbalized_field" do
           context "before saving" do
             it "should return all translations without versions" do
               @entry.title_translations.should be_instance_of(
-                Mongoid::Verbalize::VerbalizedField)
+                Mongoid::Verbalize::TranslatedString)
               @entry.title_translations.localized_values[:en].should be_instance_of(
-                Mongoid::Verbalize::VerbalizedField::LocalizedValue)
+                Mongoid::Verbalize::TranslatedString::LocalizedValue)
               @entry.title_translations.localized_values[:en].current_value.should == 'Title'
               @entry.title_translations.localized_values[:en].versions.should == []
               @entry.title_translations.localized_values[:es].should be_instance_of(
-                Mongoid::Verbalize::VerbalizedField::LocalizedValue)
+                Mongoid::Verbalize::TranslatedString::LocalizedValue)
               @entry.title_translations.localized_values[:es].current_value.should == 'Título'
               @entry.title_translations.localized_values[:es].versions.should == []
             end
@@ -156,19 +156,19 @@ describe Mongoid::Verbalize, "verbalized_field" do
 
             it "should return all translations with versions" do
               @entry.title_translations.localized_values[:en].should be_instance_of(
-                Mongoid::Verbalize::VerbalizedField::LocalizedValue)
+                Mongoid::Verbalize::TranslatedString::LocalizedValue)
               @entry.title_translations.localized_values[:en].current_value.should == 'Title'
               @entry.title_translations.localized_values[:en].versions.should have(1).item
               @entry.title_translations.localized_values[:en].versions[0].should be_instance_of(
-                Mongoid::Verbalize::VerbalizedField::LocalizedVersion)
+                Mongoid::Verbalize::TranslatedString::LocalizedVersion)
               @entry.title_translations.localized_values[:en].versions[0].version.should == 0
               @entry.title_translations.localized_values[:en].versions[0].value.should == 'Title'
               @entry.title_translations.localized_values[:es].should be_instance_of(
-                Mongoid::Verbalize::VerbalizedField::LocalizedValue)
+                Mongoid::Verbalize::TranslatedString::LocalizedValue)
               @entry.title_translations.localized_values[:es].current_value.should == 'Título'
               @entry.title_translations.localized_values[:es].versions.should have(1).item
               @entry.title_translations.localized_values[:es].versions[0].should be_instance_of(
-                Mongoid::Verbalize::VerbalizedField::LocalizedVersion)
+                Mongoid::Verbalize::TranslatedString::LocalizedVersion)
               @entry.title_translations.localized_values[:es].versions[0].version.should == 0
               @entry.title_translations.localized_values[:es].versions[0].value.should == 'Título'
             end
