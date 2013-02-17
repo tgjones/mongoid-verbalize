@@ -7,7 +7,7 @@ describe Mongoid::Verbalize::Validations::DefaultLocalePresenceValidator do
 		let(:validator)  { described_class.new(attributes: product.attributes) }
 
 		context 'when the value is valid' do
-			before { validator.validate_each(product, :name, name_field.demongoize({ 'en' => { 'value' => 'Foo' } })) }
+			before { validator.validate_each(product, :name, { 'en' => { 'value' => 'Foo' } }) }
 
 			it 'adds no errors' do
 				puts product.errors[:name]
