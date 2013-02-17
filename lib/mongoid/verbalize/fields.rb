@@ -20,6 +20,7 @@ module Mongoid
           create_verbalized_field_setter(name, meth, field)
           
           create_verbalized_translations_getter(name, meth, field)
+          create_verbalized_translations_setter(name, meth, field)
 
           create_verbalized_translations_raw_getter(name, meth)
           create_verbalized_translations_raw_setter(name, meth)
@@ -50,6 +51,14 @@ module Mongoid
           generated_methods.module_eval do
             define_method("#{meth}_translations") do
               field.demongoize(read_attribute(name))
+            end
+          end
+        end
+
+        def create_verbalized_translations_setter(name, meth, field)
+          generated_methods.module_eval do
+            define_method("#{meth}_translations=") do |value|
+              write_attribute(name, field.mongoize(value))
             end
           end
         end

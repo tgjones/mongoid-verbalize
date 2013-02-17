@@ -26,6 +26,11 @@ module Mongoid
         def find_version(version)
           versions.find_all { |v| v.version <= version }.last
         end
+
+        def append(version, value)
+          @current_value = value
+          @versions << LocalizedVersion.new(version, value)
+        end
       end
 
       LocalizedVersion = Struct.new(:version, :value)
@@ -43,6 +48,19 @@ module Mongoid
         localized_value.find_version(version)
       end
 
+      def append(language, version, value)
+        @localized_values[language] ||= LocalizedValue.new
+        @localized_values[language].append(version, value)
+      end
+
+      def value_for_locale(locales)
+        # Find first localized value in lookup path
+        localized_value = @localized_values[locales.find { |l| @localized_values[l] }]
+        return nil if localized_value.nil?
+
+        localized_value.current_value
+      end
+
       # Return translated value of field, accoring to current locale.
       # If :use_default_if_empty is set, then in case when there no
       # translation available for current locale, if will try to
@@ -55,11 +73,7 @@ module Mongoid
           lookups.push(::I18n.default_locale)
         end
         
-        # Find first localized value in lookup path
-        localized_value = @localized_values[lookups.find { |l| @localized_values[l] }]
-        return nil if localized_value.nil?
-
-        localized_value.current_value
+        value_for_locale(lookups)
       end
       def current_locale_value=(value)
         current_value.current_value = value

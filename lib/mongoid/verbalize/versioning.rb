@@ -12,6 +12,10 @@ module Mongoid
         before_save :create_new_version
       end
 
+      def current_version
+        self.verbalized_versions.last.version
+      end
+
       module ClassMethods
         def verbalized_fields(document)
           document.class.fields.reject { |name, field| field.options[:type] != TranslatedString }
@@ -75,10 +79,6 @@ module Mongoid
         self.class.verbalized_children(self).each do |child|
           self.class.iterate_verbalized_fields(child, &block)
         end
-      end
-      
-      def current_version
-        self.verbalized_versions.last.version
       end
     end
   end

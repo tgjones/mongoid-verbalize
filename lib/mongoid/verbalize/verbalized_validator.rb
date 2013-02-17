@@ -3,7 +3,8 @@ module Mongoid
     class VerbalizedValidator < ActiveModel::EachValidator
       def validate_each record, attribute, value
         if options[:mode] == :only_default
-          if record.send("#{attribute}_translations_raw")[::I18n.default_locale.to_s].blank?
+          translations = record.send("#{attribute}_translations")
+          if translations.value_for_locale([::I18n.default_locale]).blank?
             record.errors.add(attribute, :locale_blank, options.except(:mode).merge(
               :cur_locale => ::I18n.t(:"locales.#{::I18n.default_locale}", :default => ::I18n.default_locale.to_s)
             ))

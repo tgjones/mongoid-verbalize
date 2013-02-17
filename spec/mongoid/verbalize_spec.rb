@@ -507,7 +507,7 @@ describe Mongoid::Verbalize, "verbalized_field with validation 'validates_defaul
 
   describe "when run entry validations and default locale translation was set" do
     before do
-      @entry.title_validated_with_default_locale_translations_raw={'en'=>'Title'}
+      @entry.title_validated_with_default_locale_translations_raw={'en'=>{'value' => 'Title'}}
       @entry.valid?
     end
 
