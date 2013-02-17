@@ -5,6 +5,10 @@ module Mongoid
 
       module ClassMethods
 
+        def verbalized_field(name, options = {})
+          field(name, options.merge(:type => TranslatedString, :default => {}))
+        end
+
       protected
 
         # Monkey patch for Mongoid method

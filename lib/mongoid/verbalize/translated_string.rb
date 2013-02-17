@@ -107,6 +107,7 @@ module Mongoid
         # Get the object as it was stored in the database, and instantiate
         # this custom class from it.
         def demongoize(object)
+          return nil if object.nil?
           localized_values = object.each_with_object({}) do |(key, value), h|
             versions = (value['versions'] || []).map do |v|
               LocalizedVersion.new(v['version'], v['value'])
